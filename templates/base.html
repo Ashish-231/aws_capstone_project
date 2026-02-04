@@ -26,9 +26,46 @@
       </ul>
 
       <div class="nav-actions">
-        <a class="btn btn-outline" href="{{ url_for('login') }}">Login</a>
-        <a class="btn btn-primary" href="{{ url_for('register') }}">Register</a>
-      </div>
+
+        {% if session.get("user_name") %}
+
+          <!-- Profile Dropdown -->
+          <div class="profile-box">
+
+            <button class="profile-btn">
+               👤 {{ session.get("user_name") }}
+            </button>
+
+            <div class="profile-menu">
+              <p>{{ session.get("user_email") }}</p>
+              <hr>
+              <a href="{{ url_for('dashboard') }}">Dashboard</a>
+
+              {% if session.get("role") == "guest" %}
+                <a href="{{ url_for('my_bookings') }}">My Bookings</a>
+              {% endif %}
+
+              {% if session.get("role") == "staff" %}
+                <a href="{{ url_for('staff_panel') }}">Staff Panel</a>
+              {% endif %}
+
+              {% if session.get("role") == "admin" %}
+                <a href="{{ url_for('admin') }}">Admin Panel</a>
+              {% endif %}
+
+              <a href="{{ url_for('logout') }}">Logout</a>
+            </div>
+
+          </div>
+
+        {% else %}
+
+          <!-- Login/Register -->
+          <a class="btn btn-outline" href="{{ url_for('login') }}">Login</a>
+          <a class="btn btn-primary" href="{{ url_for('register') }}">Register</a>
+
+        {% endif %}
+
     </div>
   </nav>
 

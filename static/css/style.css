@@ -824,3 +824,75 @@ body {
     min-width: 700px;
   }
 }
+
+/* Make date picker icon white */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}
+
+/* Profile Dropdown */
+
+.profile-box {
+  position: relative;
+}
+
+.profile-btn {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: white;
+  padding: 9px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.profile-btn:hover {
+  background: rgba(255,255,255,0.15);
+}
+
+.profile-menu {
+  position: absolute;
+  top: 45px;
+  right: 0;
+  width: 180px;
+  background: #0f172a;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 14px;
+  padding: 10px;
+  display: none;
+  z-index: 999;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+}
+
+.profile-menu p {
+  font-size: 12px;
+  color: #c7d2fe;
+  margin-bottom: 6px;
+  word-break: break-all;
+}
+
+.profile-menu hr {
+  border: none;
+  height: 1px;
+  background: rgba(255,255,255,0.1);
+  margin: 6px 0;
+}
+
+.profile-menu a {
+  display: block;
+  padding: 7px;
+  font-size: 13px;
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+}
+
+.profile-menu a:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+/* Show dropdown on hover */
+.profile-box:hover .profile-menu {
+  display: block;
+}

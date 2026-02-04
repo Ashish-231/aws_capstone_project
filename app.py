@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 from datetime import datetime
 
 app = Flask(__name__)
@@ -6,6 +6,15 @@ app.secret_key = "blissful_abodes_secret_key"
 
 # Temporary in-memory bookings list (Later replace with DynamoDB)
 BOOKINGS = []
+USERS = []
+
+# ---------------- Role Protection ----------------
+def require_role(role):
+    if "role" not in session:
+        return False
+    return session["role"] == role
+
+
 
 # Sample rooms (Later replace with DynamoDB)
 ROOMS = [
@@ -54,22 +63,85 @@ def home():
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
+
         name = request.form.get("name")
-        flash(f"Account created successfully for {name} ✅", "success")
+        email = request.form.get("email")
+        password = request.form.get("password")
+
+        # Check duplicate email
+        for u in USERS:
+            if u["email"] == email:
+                flash("Email already registered ❌", "error")
+                return redirect(url_for("register"))
+        
+        role = request.form.get("role")
+
+
+        user = {
+            "name": name,
+            "email": email,
+            "password": password,
+            "role": role
+        }
+
+        USERS.append(user)
+
+        flash("Account created successfully ✅", "success")
         return redirect(url_for("login"))
+
     return render_template("register.html")
+
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+
     if request.method == "POST":
+
         email = request.form.get("email")
-        flash(f"Welcome back {email} ✅", "success")
-        return redirect(url_for("dashboard"))
+        password = request.form.get("password")
+
+        for user in USERS:
+
+            if user["email"] == email and user["password"] == password:
+
+                # Save user in session
+                session["user_id"] = user["email"]   # simple id for local app
+                session["user_name"] = user["name"]
+                session["user_email"] = user["email"]
+                session["role"] = user["role"]
+
+
+
+                flash("Login successful ✅", "success")
+                return redirect(url_for("dashboard"))
+
+        flash("Invalid email or password ❌", "error")
+
     return render_template("login.html")
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    flash("Logged out successfully ✅", "success")
+    return redirect(url_for("home"))
+
 
 @app.route("/dashboard")
 def dashboard():
-    return render_template("dashboard.html")
+
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    role = session.get("role")
+
+    if role == "admin":
+        return redirect(url_for("admin"))
+
+    if role == "staff":
+        return redirect(url_for("staff_panel"))
+
+    return render_template("dashboard.html")  # guest
+
 
 @app.route("/rooms", methods=["GET"])
 def rooms():
@@ -161,10 +233,21 @@ def booking_success(booking_id):
 
 @app.route("/my-bookings")
 def my_bookings():
+
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
     return render_template("my_bookings.html", bookings=BOOKINGS)
+
 
 @app.route("/staff", methods=["GET", "POST"])
 def staff_panel():
+
+    if not require_role("staff"):
+        flash("Staff access only ❌", "error")
+        return redirect(url_for("dashboard"))
+
+
     if request.method == "POST":
         room_id = request.form.get("room_id")
         new_status = request.form.get("status")
@@ -182,6 +265,11 @@ def staff_panel():
 
 @app.route("/admin")
 def admin_dashboard():
+
+    if not require_role("admin"):
+        flash("Admin access only ❌", "error")
+        return redirect(url_for("dashboard"))
+
     total_rooms = len(ROOMS)
     available_rooms = len([r for r in ROOMS if r["status"] == "Available"])
     booked_rooms = len([r for r in ROOMS if r["status"] == "Booked"])

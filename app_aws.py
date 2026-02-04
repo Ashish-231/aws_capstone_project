@@ -19,6 +19,13 @@ users_table = dynamodb.Table("Users")
 rooms_table = dynamodb.Table("Rooms")
 bookings_table = dynamodb.Table("Bookings")
 
+# ---------------- Role Protection ----------------
+def require_role(role):
+    if "role" not in session:
+        return False
+    return session["role"] == role
+
+
 
 # -------------------- Helper: Scan All --------------------
 def scan_all(table):
@@ -78,6 +85,7 @@ def login():
 
                 session["user_id"] = user["user_id"]
                 session["name"] = user["name"]
+                session["email"] = user["email"]   # ADD THIS
                 session["role"] = user["role"]
 
                 flash("Login successful ✅", "success")
@@ -105,7 +113,17 @@ def dashboard():
     if "user_id" not in session:
         return redirect(url_for("login"))
 
-    return render_template("dashboard.html")
+    role = session.get("role")
+
+    if role == "admin":
+        return redirect(url_for("admin"))
+
+    if role == "staff":
+        return redirect(url_for("staff_panel"))
+
+    return render_template("dashboard.html")  # guest
+
+
 
 
 # -------------------- Rooms --------------------
@@ -248,9 +266,10 @@ def my_bookings():
 @app.route("/staff", methods=["GET", "POST"])
 def staff_panel():
 
-    if session.get("role") != "staff":
-        flash("Unauthorized ❌", "error")
+    if not require_role("staff"):
+        flash("Staff access only ❌", "error")
         return redirect(url_for("dashboard"))
+
 
     if request.method == "POST":
 
@@ -276,8 +295,8 @@ def staff_panel():
 @app.route("/admin")
 def admin():
 
-    if session.get("role") != "admin":
-        flash("Unauthorized ❌", "error")
+    if not require_role("admin"):
+        flash("Admin access only ❌", "error")
         return redirect(url_for("dashboard"))
 
     rooms = scan_all(rooms_table)
