@@ -288,7 +288,7 @@ def staff_panel():
     for r in rooms:
         r["id"] = r["room_id"]
 
-    return render_template("staff.html", rooms=rooms)
+    return render_template("staffs.html", rooms=rooms)
 
 
 # -------------------- Admin --------------------
@@ -313,7 +313,7 @@ def admin():
             pass
 
     return render_template(
-        "admin.html",
+        "admins.html",
         total_rooms=len(rooms),
         booked_rooms=booked,
         available_rooms=len(rooms) - booked,

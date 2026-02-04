@@ -62,31 +62,28 @@ def home():
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
+
     if request.method == "POST":
 
         name = request.form.get("name")
         email = request.form.get("email")
         password = request.form.get("password")
-
-        # Check duplicate email
-        for u in USERS:
-            if u["email"] == email:
-                flash("Email already registered ❌", "error")
-                return redirect(url_for("register"))
-        
         role = request.form.get("role")
 
+        # Check duplicate
+        for u in USERS:
+            if u["email"] == email:
+                flash("Email already exists ❌", "error")
+                return redirect(url_for("register"))
 
-        user = {
+        USERS.append({
             "name": name,
             "email": email,
             "password": password,
             "role": role
-        }
+        })
 
-        USERS.append(user)
-
-        flash("Account created successfully ✅", "success")
+        flash("Registered successfully ✅ Please login.")
         return redirect(url_for("login"))
 
     return render_template("register.html")
@@ -100,24 +97,24 @@ def login():
         email = request.form.get("email")
         password = request.form.get("password")
 
+        print("USERS:", USERS)  # Debug (you can remove later)
+
         for user in USERS:
 
             if user["email"] == email and user["password"] == password:
 
-                # Save user in session
-                session["user_id"] = user["email"]   # simple id for local app
+                session["user_id"] = email
                 session["user_name"] = user["name"]
-                session["user_email"] = user["email"]
+                session["user_email"] = email
                 session["role"] = user["role"]
 
-
-
-                flash("Login successful ✅", "success")
+                flash("Login successful ✅")
                 return redirect(url_for("dashboard"))
 
-        flash("Invalid email or password ❌", "error")
+        flash("Invalid email or password ❌")
 
     return render_template("login.html")
+
 
 @app.route("/logout")
 def logout():
@@ -261,7 +258,7 @@ def staff_panel():
 
         return redirect(url_for("staff_panel"))
 
-    return render_template("staff.html", rooms=ROOMS)
+    return render_template("staffs.html", rooms=ROOMS)
 
 @app.route("/admin")
 def admin_dashboard():
@@ -278,7 +275,7 @@ def admin_dashboard():
     revenue_estimate = sum([b["price_per_night"] for b in BOOKINGS])  # simple estimate
 
     return render_template(
-        "admin.html",
+        "admins.html",
         total_rooms=total_rooms,
         available_rooms=available_rooms,
         booked_rooms=booked_rooms,
@@ -288,4 +285,5 @@ def admin_dashboard():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, use_reloader=False)
+
