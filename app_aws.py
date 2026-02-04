@@ -11,14 +11,26 @@ app.secret_key = "blissful_abodes_aws_secret"
 REGION = "us-east-1"   # Change if needed
 SNS_TOPIC_ARN = "PASTE_YOUR_SNS_TOPIC_ARN_HERE"
 
-# IAM Role will auto authenticate
 dynamodb = boto3.resource("dynamodb", region_name=REGION)
 sns = boto3.client("sns", region_name=REGION)
 
-# -------------------- DynamoDB Tables --------------------
+# -------------------- Tables --------------------
 users_table = dynamodb.Table("Users")
 rooms_table = dynamodb.Table("Rooms")
 bookings_table = dynamodb.Table("Bookings")
+
+
+# -------------------- Helper: Scan All --------------------
+def scan_all(table):
+    data = []
+    response = table.scan()
+    data.extend(response.get("Items", []))
+
+    while "LastEvaluatedKey" in response:
+        response = table.scan(ExclusiveStartKey=response["LastEvaluatedKey"])
+        data.extend(response.get("Items", []))
+
+    return data
 
 
 # -------------------- Home --------------------
@@ -33,19 +45,12 @@ def register():
 
     if request.method == "POST":
 
-        name = request.form["name"]
-        email = request.form["email"]
-        password = request.form["password"]
-        role = request.form["role"]
-
-        user_id = str(uuid.uuid4())
-
         user = {
-            "user_id": user_id,
-            "name": name,
-            "email": email,
-            "password": password,   # (Hash later in future)
-            "role": role
+            "user_id": str(uuid.uuid4()),
+            "name": request.form["name"],
+            "email": request.form["email"],
+            "password": request.form["password"],
+            "role": request.form["role"]
         }
 
         users_table.put_item(Item=user)
@@ -65,8 +70,7 @@ def login():
         email = request.form["email"]
         password = request.form["password"]
 
-        response = users_table.scan()
-        users = response.get("Items", [])
+        users = scan_all(users_table)
 
         for user in users:
 
@@ -108,15 +112,33 @@ def dashboard():
 @app.route("/rooms")
 def rooms():
 
-    response = rooms_table.scan()
-    rooms_data = response.get("Items", [])
+    room_type = request.args.get("type", "").strip()
+    max_price = request.args.get("max_price", "").strip()
+    guests = request.args.get("guests", "").strip()
+
+    rooms_data = scan_all(rooms_table)
+
+    # Map room_id -> id (Template compatibility)
+    for r in rooms_data:
+        r["id"] = r["room_id"]
+
+    filtered = rooms_data
+
+    if room_type:
+        filtered = [r for r in filtered if r["type"].lower() == room_type.lower()]
+
+    if max_price.isdigit():
+        filtered = [r for r in filtered if int(r["price"]) <= int(max_price)]
+
+    if guests.isdigit():
+        filtered = [r for r in filtered if int(r["guests"]) >= int(guests)]
 
     return render_template(
         "rooms.html",
-        rooms=rooms_data,
-        selected_type="",
-        selected_price="",
-        selected_guests=""
+        rooms=filtered,
+        selected_type=room_type,
+        selected_price=max_price,
+        selected_guests=guests
     )
 
 
@@ -138,11 +160,10 @@ def book_room(room_id):
         flash("Room already booked ❌", "error")
         return redirect(url_for("rooms"))
 
-    if request.method == "POST":
+    # Map for template
+    room["id"] = room["room_id"]
 
-        checkin = request.form["checkin"]
-        checkout = request.form["checkout"]
-        guests = request.form["guests"]
+    if request.method == "POST":
 
         booking_id = str(uuid.uuid4())
 
@@ -152,17 +173,16 @@ def book_room(room_id):
             "user_name": session["name"],
             "room_id": room_id,
             "room_name": room["name"],
-            "checkin": checkin,
-            "checkout": checkout,
-            "guests": guests,
+            "checkin": request.form["checkin"],
+            "checkout": request.form["checkout"],
+            "guests": request.form["guests"],
             "price": room["price"],
             "created_at": datetime.now().isoformat()
         }
 
-        # Save booking
         bookings_table.put_item(Item=booking)
 
-        # Update room status
+        # Update room
         rooms_table.update_item(
             Key={"room_id": room_id},
             UpdateExpression="SET #s = :s",
@@ -170,15 +190,13 @@ def book_room(room_id):
             ExpressionAttributeValues={":s": "Booked"}
         )
 
-        # Send SNS Email
-        message = f"""
+        # SNS Mail
+        msg = f"""
 Hello {session['name']},
 
-Your booking is confirmed!
+Your booking is confirmed.
 
 Room: {room['name']}
-Check-in: {checkin}
-Check-out: {checkout}
 Booking ID: {booking_id}
 
 Thank you,
@@ -187,8 +205,8 @@ Blissful Abodes
 
         sns.publish(
             TopicArn=SNS_TOPIC_ARN,
-            Message=message,
-            Subject="Hotel Booking Confirmation"
+            Message=msg,
+            Subject="Booking Confirmation"
         )
 
         return redirect(url_for("booking_success", booking_id=booking_id))
@@ -217,79 +235,76 @@ def my_bookings():
     if "user_id" not in session:
         return redirect(url_for("login"))
 
-    response = bookings_table.scan()
-    bookings = response.get("Items", [])
+    bookings = scan_all(bookings_table)
 
-    user_bookings = [
+    user_data = [
         b for b in bookings if b["user_id"] == session["user_id"]
     ]
 
-    return render_template("my_bookings.html", bookings=user_bookings)
+    return render_template("my_bookings.html", bookings=user_data)
 
 
 # -------------------- Staff Panel --------------------
 @app.route("/staff", methods=["GET", "POST"])
 def staff_panel():
 
-    if "role" not in session or session["role"] != "staff":
-        flash("Unauthorized access ❌", "error")
+    if session.get("role") != "staff":
+        flash("Unauthorized ❌", "error")
         return redirect(url_for("dashboard"))
 
     if request.method == "POST":
 
-        room_id = request.form["room_id"]
-        status = request.form["status"]
-
         rooms_table.update_item(
-            Key={"room_id": room_id},
+            Key={"room_id": request.form["room_id"]},
             UpdateExpression="SET #s = :s",
             ExpressionAttributeNames={"#s": "status"},
-            ExpressionAttributeValues={":s": status}
+            ExpressionAttributeValues={":s": request.form["status"]}
         )
 
         flash("Room updated ✅", "success")
         return redirect(url_for("staff_panel"))
 
-    rooms = rooms_table.scan().get("Items", [])
+    rooms = scan_all(rooms_table)
+
+    for r in rooms:
+        r["id"] = r["room_id"]
 
     return render_template("staff.html", rooms=rooms)
 
 
-# -------------------- Admin Dashboard --------------------
+# -------------------- Admin --------------------
 @app.route("/admin")
 def admin():
 
-    if "role" not in session or session["role"] != "admin":
-        flash("Unauthorized access ❌", "error")
+    if session.get("role") != "admin":
+        flash("Unauthorized ❌", "error")
         return redirect(url_for("dashboard"))
 
-    rooms = rooms_table.scan().get("Items", [])
-    bookings = bookings_table.scan().get("Items", [])
-    users = users_table.scan().get("Items", [])
+    rooms = scan_all(rooms_table)
+    bookings = scan_all(bookings_table)
+    users = scan_all(users_table)
 
-    total_rooms = len(rooms)
     booked = len([r for r in rooms if r["status"] == "Booked"])
-    available = total_rooms - booked
 
-    revenue = sum([int(b["price"]) for b in bookings])
+    revenue = 0
+    for b in bookings:
+        try:
+            revenue += int(b["price"])
+        except:
+            pass
 
     return render_template(
         "admin.html",
-        total_rooms=total_rooms,
+        total_rooms=len(rooms),
         booked_rooms=booked,
-        available_rooms=available,
+        available_rooms=len(rooms) - booked,
         total_bookings=len(bookings),
         revenue_estimate=revenue,
         total_users=len(users)
     )
 
 
-# -------------------- Run Server --------------------
+# -------------------- Run --------------------
 if __name__ == "__main__":
 
-    app.run(
-        host="0.0.0.0",
-        port=5000,
-        debug=True
-    )
- 
+    app.run(host="0.0.0.0", port=5000, debug=True)
