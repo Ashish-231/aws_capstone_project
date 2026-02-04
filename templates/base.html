@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}Blissful Abodes{% endblock %}</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="container nav-content">
+      <div class="logo">
+        <span class="logo-icon">🏨</span>
+        <span class="logo-text">Blissful Abodes</span>
+      </div>
+
+      <ul class="nav-links">
+        <li><a href="/" class="active">Home</a></li>
+        <li><a href="{{ url_for('rooms') }}">Rooms</a></li>
+        <li><a href="{{ url_for('my_bookings') }}">Bookings</a></li>
+        <li><a href="#">About</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <a class="btn btn-outline" href="{{ url_for('login') }}">Login</a>
+        <a class="btn btn-primary" href="{{ url_for('register') }}">Register</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer-content">
+      <p>© 2026 Blissful Abodes. Built with Flask + AWS.</p>
+    </div>
+  </footer>
+</body>
+</html>

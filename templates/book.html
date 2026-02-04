@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Book Room | Blissful Abodes{% endblock %}
+
+{% block content %}
+<section class="booking-page">
+  <div class="container booking-grid">
+
+    <!-- Left: Booking Form -->
+    <div class="booking-card">
+      <h2>Confirm Your Booking</h2>
+      <p>Fill details to reserve your room instantly.</p>
+
+      <form method="POST" class="auth-form">
+        <label>Full Name</label>
+        <input type="text" name="full_name" placeholder="Enter your full name" required>
+
+        <label>Email</label>
+        <input type="email" name="email" placeholder="Enter your email" required>
+
+        <label>Check-in Date</label>
+        <input type="date" name="checkin" required>
+
+        <label>Check-out Date</label>
+        <input type="date" name="checkout" required>
+
+        <label>Guests</label>
+        <input type="number" name="guests" min="1" max="{{ room.guests }}" placeholder="Max {{ room.guests }}" required>
+
+        <button type="submit" class="btn btn-primary w-full">Confirm Booking ✅</button>
+      </form>
+    </div>
+
+    <!-- Right: Room Summary -->
+    <div class="summary-card">
+      <h3>Room Summary</h3>
+
+      <div class="summary-box">
+        <h4>{{ room.name }}</h4>
+        <p class="muted">{{ room.type }} • Up to {{ room.guests }} guests</p>
+
+        <p class="big-price">₹ {{ room.price }} <span>/night</span></p>
+
+        <div class="features-row">
+          {% for f in room.features %}
+            <span class="chip">{{ f }}</span>
+          {% endfor %}
+        </div>
+
+        <p class="muted-note">
+          Booking confirmation will be sent via Email (SNS integration in AWS later).
+        </p>
+      </div>
+
+      <a href="{{ url_for('rooms') }}" class="btn btn-outline w-full">← Back to Rooms</a>
+    </div>
+
+  </div>
+</section>
+{% endblock %}

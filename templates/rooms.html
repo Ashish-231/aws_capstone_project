@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Rooms | Blissful Abodes{% endblock %}
+
+{% block content %}
+<section class="rooms-page">
+  <div class="container">
+
+    <div class="page-head">
+      <h1>Available Rooms</h1>
+      <p>Browse rooms and book instantly with real-time availability.</p>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-card">
+      <form method="GET" class="filters-grid">
+
+        <div class="filter-item">
+          <label>Room Type</label>
+          <select name="type">
+            <option value="">All</option>
+            <option value="Standard" {% if selected_type=="Standard" %}selected{% endif %}>Standard</option>
+            <option value="Deluxe" {% if selected_type=="Deluxe" %}selected{% endif %}>Deluxe</option>
+            <option value="Suite" {% if selected_type=="Suite" %}selected{% endif %}>Suite</option>
+            <option value="Family" {% if selected_type=="Family" %}selected{% endif %}>Family</option>
+          </select>
+        </div>
+
+        <div class="filter-item">
+          <label>Max Price (₹)</label>
+          <input type="number" name="max_price" placeholder="e.g. 3000" value="{{ selected_price }}">
+        </div>
+
+        <div class="filter-item">
+          <label>Guests</label>
+          <input type="number" name="guests" placeholder="e.g. 2" value="{{ selected_guests }}">
+        </div>
+
+        <div class="filter-item">
+          <label>&nbsp;</label>
+          <button class="btn btn-primary w-full" type="submit">Apply Filters</button>
+        </div>
+
+      </form>
+    </div>
+
+    <!-- Rooms Cards -->
+    <div class="rooms-grid">
+      {% if rooms|length == 0 %}
+        <div class="empty-card">
+          <h3>No rooms found 😕</h3>
+          <p>Try changing filters to see more results.</p>
+        </div>
+      {% endif %}
+
+      {% for room in rooms %}
+      <div class="room-card">
+        <div class="room-top">
+          <div>
+            <h3>{{ room.name }}</h3>
+            <p class="room-meta">{{ room.type }} • Up to {{ room.guests }} guests</p>
+          </div>
+
+          <span class="badge {% if room.status=='Available' %}badge-green{% else %}badge-red{% endif %}">
+            {{ room.status }}
+          </span>
+        </div>
+
+        <div class="price-row">
+          <p class="price">₹ {{ room.price }} <span>/night</span></p>
+        </div>
+
+        <div class="features-row">
+          {% for f in room.features %}
+            <span class="chip">{{ f }}</span>
+          {% endfor %}
+        </div>
+
+        <div class="room-actions">
+          {% if room.status == "Available" %}
+            <a href="{{ url_for('book_room', room_id=room['id']) }}" class="btn btn-primary w-full">Book Now</a>
+          {% else %}
+            <button class="btn btn-outline w-full" disabled>Not Available</button>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+  </div>
+</section>
+{% endblock %}

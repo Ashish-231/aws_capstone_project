@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard | Blissful Abodes{% endblock %}
+
+{% block content %}
+<section class="admin-page">
+  <div class="container">
+
+    <div class="page-head">
+      <h1>Admin Dashboard</h1>
+      <p>Monitor platform usage, occupancy, and booking analytics.</p>
+    </div>
+
+    <div class="admin-grid">
+      <div class="admin-card">
+        <h3>Total Rooms</h3>
+        <p class="admin-number">{{ total_rooms }}</p>
+      </div>
+
+      <div class="admin-card">
+        <h3>Available Rooms</h3>
+        <p class="admin-number">{{ available_rooms }}</p>
+      </div>
+
+      <div class="admin-card">
+        <h3>Booked Rooms</h3>
+        <p class="admin-number">{{ booked_rooms }}</p>
+      </div>
+
+      <div class="admin-card">
+        <h3>Total Bookings</h3>
+        <p class="admin-number">{{ total_bookings }}</p>
+      </div>
+
+      <div class="admin-card admin-wide">
+        <h3>Estimated Revenue (Demo)</h3>
+        <p class="admin-number">₹ {{ revenue_estimate }}</p>
+        <p class="muted-note">
+          (This is a demo calculation. DynamoDB + real billing logic will be added later.)
+        </p>
+      </div>
+    </div>
+
+    <div class="admin-actions">
+      <a href="{{ url_for('rooms') }}" class="btn btn-outline">Manage Rooms</a>
+      <a href="{{ url_for('staff_panel') }}" class="btn btn-outline">Open Staff Panel</a>
+      <a href="{{ url_for('my_bookings') }}" class="btn btn-primary">View All Bookings</a>
+    </div>
+
+  </div>
+</section>
+{% endblock %}

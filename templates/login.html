@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Login | Blissful Abodes{% endblock %}
+
+{% block content %}
+<section class="auth-section">
+  <div class="container auth-container">
+
+    <div class="auth-card">
+      <h2>Welcome Back 👋</h2>
+      <p>Login to manage bookings and access dashboards.</p>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <form method="POST" class="auth-form">
+        <label>Email</label>
+        <input type="email" name="email" placeholder="Enter your email" required>
+
+        <label>Password</label>
+        <input type="password" name="password" placeholder="Enter password" required>
+
+        <button type="submit" class="btn btn-primary w-full">Login</button>
+      </form>
+
+      <p class="auth-bottom">
+        New here?
+        <a href="{{ url_for('register') }}">Create account</a>
+      </p>
+    </div>
+
+  </div>
+</section>
+{% endblock %}

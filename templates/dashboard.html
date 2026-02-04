@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Dashboard | Blissful Abodes{% endblock %}
+
+{% block content %}
+<section class="dashboard">
+  <div class="container">
+
+    <div class="dash-header">
+      <h1>Dashboard</h1>
+      <p>Welcome to Blissful Abodes. Your hotel operations, simplified.</p>
+    </div>
+
+    <div class="dash-grid">
+      <div class="dash-card">
+        <h3>📌 Browse Rooms</h3>
+        <p>Explore available rooms with real-time occupancy updates.</p>
+        <a href="{{ url_for('rooms') }}" class="btn btn-outline">View Rooms</a>
+      </div>
+
+      <div class="dash-card">
+        <h3>📅 Manage Bookings</h3>
+        <p>Track your bookings and monitor status instantly.</p>
+        <a href="#" class="btn btn-outline">My Bookings</a>
+      </div>
+
+      <div class="dash-card">
+        <h3>📊 Admin Analytics</h3>
+        <p>Access analytics dashboard for platform performance insights.</p>
+        <a href="#" class="btn btn-outline">Open Analytics</a>
+      </div>
+    </div>
+
+  </div>
+</section>
+{% endblock %}

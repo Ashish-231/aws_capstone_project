@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Home | Blissful Abodes{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="container hero-grid">
+    
+    <div class="hero-text">
+      <p class="tagline">Cloud-Based Hotel Booking Platform</p>
+      <h1>Book Your Perfect Stay with <span class="highlight">Real-Time Availability</span></h1>
+      <p class="subtitle">
+        A smart hotel reservation platform that ensures smooth booking, accurate room tracking, and secure cloud operations.
+      </p>
+
+      <div class="hero-buttons">
+        <a href="{{ url_for('rooms') }}" class="btn btn-primary">Explore Rooms</a>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline">View Dashboard</a>
+      </div>
+
+
+      <div class="stats">
+        <div class="stat-card">
+          <h3>24/7</h3>
+          <p>Availability</p>
+        </div>
+        <div class="stat-card">
+          <h3>Fast</h3>
+          <p>Booking Flow</p>
+        </div>
+        <div class="stat-card">
+          <h3>Secure</h3>
+          <p>AWS IAM</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-card">
+      <h2>Quick Search</h2>
+      <p>Find rooms instantly with filters.</p>
+
+      <form class="search-form">
+        <label>Location</label>
+        <input type="text" placeholder="e.g., Delhi, Mumbai, Goa" />
+
+        <label>Check-in Date</label>
+        <input type="date" />
+
+        <label>Check-out Date</label>
+        <input type="date" />
+
+        <label>Guests</label>
+        <select>
+          <option>1 Guest</option>
+          <option>2 Guests</option>
+          <option>3 Guests</option>
+          <option>4+ Guests</option>
+        </select>
+
+        <button type="button" class="btn btn-primary w-full">Search Rooms</button>
+      </form>
+    </div>
+
+  </div>
+</section>
+
+<section class="features">
+  <div class="container">
+    <h2 class="section-title">Why Blissful Abodes?</h2>
+    <p class="section-subtitle">Built for guests, staff, and admins with a scalable AWS-ready architecture.</p>
+
+    <div class="feature-grid">
+      <div class="feature-card">
+        <h3>✅ Real-Time Room Status</h3>
+        <p>Room availability stays updated and accurate using DynamoDB-based records.</p>
+      </div>
+
+      <div class="feature-card">
+        <h3>✅ Email Confirmation (SNS)</h3>
+        <p>Instant booking confirmation emails through AWS SNS notifications.</p>
+      </div>
+
+      <div class="feature-card">
+        <h3>✅ Admin Dashboard</h3>
+        <p>Monitor occupancy, manage rooms, track bookings and view analytics.</p>
+      </div>
+
+      <div class="feature-card">
+        <h3>✅ Secure + Scalable</h3>
+        <p>EC2 deployment + IAM access control for production-ready cloud hosting.</p>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

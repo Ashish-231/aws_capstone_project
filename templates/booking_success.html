@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Booking Confirmed | Blissful Abodes{% endblock %}
+
+{% block content %}
+<section class="success-page">
+  <div class="container">
+    <div class="success-card">
+
+      <div class="success-icon">✅</div>
+      <h2>Booking Confirmed!</h2>
+      <p>Your room has been booked successfully. Details are below:</p>
+
+      <div class="success-details">
+        <div class="detail-row">
+          <span>Booking ID:</span>
+          <strong>{{ booking.booking_id }}</strong>
+        </div>
+        <div class="detail-row">
+          <span>Room:</span>
+          <strong>{{ booking.room_name }}</strong>
+        </div>
+        <div class="detail-row">
+          <span>Name:</span>
+          <strong>{{ booking.full_name }}</strong>
+        </div>
+        <div class="detail-row">
+          <span>Email:</span>
+          <strong>{{ booking.email }}</strong>
+        </div>
+        <div class="detail-row">
+          <span>Check-in:</span>
+          <strong>{{ booking.checkin }}</strong>
+        </div>
+        <div class="detail-row">
+          <span>Check-out:</span>
+          <strong>{{ booking.checkout }}</strong>
+        </div>
+        <div class="detail-row">
+          <span>Guests:</span>
+          <strong>{{ booking.guests }}</strong>
+        </div>
+        <div class="detail-row">
+          <span>Price per night:</span>
+          <strong>₹ {{ booking.price_per_night }}</strong>
+        </div>
+      </div>
+
+      <div class="success-actions">
+        <a href="{{ url_for('rooms') }}" class="btn btn-outline">Book Another Room</a>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Go to Dashboard</a>
+      </div>
+
+      <p class="muted-note">
+        (Later we’ll add AWS SNS email confirmation automatically)
+      </p>
+
+    </div>
+  </div>
+</section>
+{% endblock %}

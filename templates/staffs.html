@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Staff Panel | Blissful Abodes{% endblock %}
+
+{% block content %}
+<section class="staff-page">
+  <div class="container">
+
+    <div class="page-head">
+      <h1>Staff Panel</h1>
+      <p>Manage room occupancy status and keep availability updated.</p>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="table-card">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Room ID</th>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Guests</th>
+            <th>Price</th>
+            <th>Status</th>
+            <th>Update</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for r in rooms %}
+          <tr>
+            <td><span class="table-badge">{{ r['id'] }}</span></td>
+            <td>{{ r['name'] }}</td>
+            <td>{{ r['type'] }}</td>
+            <td>{{ r['guests'] }}</td>
+            <td>₹ {{ r['price'] }}</td>
+            <td>
+              <span class="badge {% if r['status']=='Available' %}badge-green{% else %}badge-red{% endif %}">
+                {{ r['status'] }}
+              </span>
+            </td>
+            <td>
+              <form method="POST" class="inline-form">
+                <input type="hidden" name="room_id" value="{{ r['id'] }}">
+                <select name="status">
+                  <option value="Available" {% if r['status']=="Available" %}selected{% endif %}>Available</option>
+                  <option value="Booked" {% if r['status']=="Booked" %}selected{% endif %}>Booked</option>
+                </select>
+                <button class="btn btn-primary" type="submit">Update</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+
+      </table>
+    </div>
+
+  </div>
+</section>
+{% endblock %}
