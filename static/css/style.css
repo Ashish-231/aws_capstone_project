@@ -896,3 +896,29 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 .profile-box:hover .profile-menu {
   display: block;
 }
+
+.profile-menu {
+  position: relative;
+  color: white;
+  cursor: pointer;
+}
+
+.profile-menu .dropdown {
+  display: none;
+  position: absolute;
+  background: #111;
+  padding: 10px;
+  border-radius: 8px;
+  right: 0;
+}
+
+.profile-menu:hover .dropdown {
+  display: block;
+}
+
+.profile-menu .dropdown a {
+  display: block;
+  color: white;
+  padding: 5px;
+  text-decoration: none;
+}

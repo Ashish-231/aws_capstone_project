@@ -61,8 +61,29 @@
         {% else %}
 
           <!-- Login/Register -->
-          <a class="btn btn-outline" href="{{ url_for('login') }}">Login</a>
-          <a class="btn btn-primary" href="{{ url_for('register') }}">Register</a>
+          {% if session.get("user_id") %}
+
+          <div class="profile-menu">
+
+            <span class="user-name">
+              👤 {{ session.get("name") }}
+            </span>
+
+            <div class="dropdown">
+              <a href="/dashboard">Dashboard</a>
+              <a href="/my-bookings">My Bookings</a>
+              <a href="/logout">Logout</a>
+            </div>
+
+          </div>
+
+          {% else %}
+
+          <a href="{{ url_for('login') }}" class="btn-login">Login</a>
+          <a href="{{ url_for('register') }}" class="btn-register">Register</a>
+
+          {% endif %}
+
 
         {% endif %}
 
