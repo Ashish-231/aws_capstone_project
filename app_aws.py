@@ -9,7 +9,7 @@ app.secret_key = "blissful_abodes_aws_secret"
 
 # -------------------- AWS Config --------------------
 REGION = "us-east-1"   # Change if needed
-SNS_TOPIC_ARN = "PASTE_YOUR_SNS_TOPIC_ARN_HERE"
+SNS_TOPIC_ARN = "arn:aws:sns:us-east-1:183631319065:BlissfulAbodes-Booking-Alerts"
 
 dynamodb = boto3.resource("dynamodb", region_name=REGION)
 sns = boto3.client("sns", region_name=REGION)
