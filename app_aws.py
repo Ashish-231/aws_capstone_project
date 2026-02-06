@@ -10,30 +10,30 @@ app.secret_key = "blissful_abodes_aws_secret"
 # -------------------- AWS Config --------------------
 REGION = "us-east-1"
 
-# ⚠️ Replace with real ARN
-SNS_TOPIC_ARN = "PASTE_YOUR_SNS_TOPIC_ARN_HERE"
-
 dynamodb = boto3.resource("dynamodb", region_name=REGION)
-sns = boto3.client("sns", region_name=REGION)
 
-# -------------------- Tables --------------------
+# -------------------- DynamoDB Tables --------------------
 users_table = dynamodb.Table("Users")
 rooms_table = dynamodb.Table("Rooms")
 bookings_table = dynamodb.Table("Bookings")
 
-# ---------------- Role Protection ----------------
+
+# -------------------- Role Protection --------------------
 def require_role(role):
     return session.get("role") == role
 
 
 # -------------------- Helper: Scan All --------------------
 def scan_all(table):
+
     data = []
     response = table.scan()
     data.extend(response.get("Items", []))
 
     while "LastEvaluatedKey" in response:
-        response = table.scan(ExclusiveStartKey=response["LastEvaluatedKey"])
+        response = table.scan(
+            ExclusiveStartKey=response["LastEvaluatedKey"]
+        )
         data.extend(response.get("Items", []))
 
     return data
@@ -53,12 +53,12 @@ def register():
 
         email = request.form["email"]
 
-        # Prevent duplicate email
+        # Check duplicate email
         users = scan_all(users_table)
 
         for u in users:
             if u["email"] == email:
-                flash("Email already exists ❌", "error")
+                flash("Email already registered ❌", "error")
                 return redirect(url_for("register"))
 
         user = {
@@ -100,7 +100,7 @@ def login():
                 flash("Login successful ✅", "success")
                 return redirect(url_for("dashboard"))
 
-        flash("Invalid login ❌", "error")
+        flash("Invalid email or password ❌", "error")
 
     return render_template("login.html")
 
@@ -141,6 +141,7 @@ def rooms():
 
     rooms_data = scan_all(rooms_table)
 
+    # Map room_id -> id (for template)
     for r in rooms_data:
         r["id"] = r["room_id"]
 
@@ -201,24 +202,16 @@ def book_room(room_id):
             "created_at": datetime.now().isoformat()
         }
 
+        # Save booking
         bookings_table.put_item(Item=booking)
 
+        # Update room status
         rooms_table.update_item(
             Key={"room_id": room_id},
             UpdateExpression="SET #s = :s",
             ExpressionAttributeNames={"#s": "status"},
             ExpressionAttributeValues={":s": "Booked"}
         )
-
-        # Safe SNS
-        try:
-            sns.publish(
-                TopicArn=SNS_TOPIC_ARN,
-                Message=f"Booking confirmed: {booking_id}",
-                Subject="Booking Confirmation"
-            )
-        except:
-            pass
 
         return redirect(url_for("booking_success", booking_id=booking_id))
 
@@ -310,7 +303,7 @@ def admin():
     )
 
 
-# -------------------- Run --------------------
+# -------------------- Run Server --------------------
 if __name__ == "__main__":
 
     app.run(host="0.0.0.0", port=5000, debug=False)
