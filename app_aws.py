@@ -8,7 +8,9 @@ app = Flask(__name__)
 app.secret_key = "blissful_abodes_aws_secret"
 
 # -------------------- AWS Config --------------------
-REGION = "us-east-1"   # Change if needed
+REGION = "us-east-1"
+
+# ⚠️ Replace with real ARN
 SNS_TOPIC_ARN = "PASTE_YOUR_SNS_TOPIC_ARN_HERE"
 
 dynamodb = boto3.resource("dynamodb", region_name=REGION)
@@ -21,10 +23,7 @@ bookings_table = dynamodb.Table("Bookings")
 
 # ---------------- Role Protection ----------------
 def require_role(role):
-    if "role" not in session:
-        return False
-    return session["role"] == role
-
+    return session.get("role") == role
 
 
 # -------------------- Helper: Scan All --------------------
@@ -52,10 +51,20 @@ def register():
 
     if request.method == "POST":
 
+        email = request.form["email"]
+
+        # Prevent duplicate email
+        users = scan_all(users_table)
+
+        for u in users:
+            if u["email"] == email:
+                flash("Email already exists ❌", "error")
+                return redirect(url_for("register"))
+
         user = {
             "user_id": str(uuid.uuid4()),
             "name": request.form["name"],
-            "email": request.form["email"],
+            "email": email,
             "password": request.form["password"],
             "role": request.form["role"]
         }
@@ -85,7 +94,7 @@ def login():
 
                 session["user_id"] = user["user_id"]
                 session["name"] = user["name"]
-                session["email"] = user["email"]   # ADD THIS
+                session["email"] = user["email"]
                 session["role"] = user["role"]
 
                 flash("Login successful ✅", "success")
@@ -113,17 +122,13 @@ def dashboard():
     if "user_id" not in session:
         return redirect(url_for("login"))
 
-    role = session.get("role")
-
-    if role == "admin":
+    if require_role("admin"):
         return redirect(url_for("admin"))
 
-    if role == "staff":
+    if require_role("staff"):
         return redirect(url_for("staff_panel"))
 
-    return render_template("dashboard.html")  # guest
-
-
+    return render_template("dashboard.html")
 
 
 # -------------------- Rooms --------------------
@@ -136,7 +141,6 @@ def rooms():
 
     rooms_data = scan_all(rooms_table)
 
-    # Map room_id -> id (Template compatibility)
     for r in rooms_data:
         r["id"] = r["room_id"]
 
@@ -178,7 +182,6 @@ def book_room(room_id):
         flash("Room already booked ❌", "error")
         return redirect(url_for("rooms"))
 
-    # Map for template
     room["id"] = room["room_id"]
 
     if request.method == "POST":
@@ -200,7 +203,6 @@ def book_room(room_id):
 
         bookings_table.put_item(Item=booking)
 
-        # Update room
         rooms_table.update_item(
             Key={"room_id": room_id},
             UpdateExpression="SET #s = :s",
@@ -208,24 +210,15 @@ def book_room(room_id):
             ExpressionAttributeValues={":s": "Booked"}
         )
 
-        # SNS Mail
-        msg = f"""
-Hello {session['name']},
-
-Your booking is confirmed.
-
-Room: {room['name']}
-Booking ID: {booking_id}
-
-Thank you,
-Blissful Abodes
-"""
-
-        sns.publish(
-            TopicArn=SNS_TOPIC_ARN,
-            Message=msg,
-            Subject="Booking Confirmation"
-        )
+        # Safe SNS
+        try:
+            sns.publish(
+                TopicArn=SNS_TOPIC_ARN,
+                Message=f"Booking confirmed: {booking_id}",
+                Subject="Booking Confirmation"
+            )
+        except:
+            pass
 
         return redirect(url_for("booking_success", booking_id=booking_id))
 
@@ -270,7 +263,6 @@ def staff_panel():
         flash("Staff access only ❌", "error")
         return redirect(url_for("dashboard"))
 
-
     if request.method == "POST":
 
         rooms_table.update_item(
@@ -305,12 +297,7 @@ def admin():
 
     booked = len([r for r in rooms if r["status"] == "Booked"])
 
-    revenue = 0
-    for b in bookings:
-        try:
-            revenue += int(b["price"])
-        except:
-            pass
+    revenue = sum(int(b["price"]) for b in bookings if "price" in b)
 
     return render_template(
         "admins.html",
@@ -326,4 +313,4 @@ def admin():
 # -------------------- Run --------------------
 if __name__ == "__main__":
 
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=False)
